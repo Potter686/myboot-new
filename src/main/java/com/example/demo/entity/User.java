@@ -12,11 +12,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * Created by linziyu on 2018/5/13.
 
- * 用户实体类，通过实现UserDetails接口实现认证及授权
- */
 @Entity
 @Data
 @Table(name = "user1") //设置对应表名字
@@ -24,9 +20,8 @@ public class User implements UserDetails{
 
     //主键及自动增长
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private  long id;
-    @GeneratedValue
     private String name;
     private String password;
 

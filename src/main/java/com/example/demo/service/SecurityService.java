@@ -12,13 +12,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
 
 import javax.persistence.Id;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
-/**
- * Created by linziyu on 2018/5/13.
- * 加载用户特定数据类,为认证用户服务
- *
- */
 
 //@Service
 public class SecurityService implements UserDetailsService{
@@ -30,17 +27,17 @@ public class SecurityService implements UserDetailsService{
 
 
     @Override
-    public UserDetails loadUserByUsername(String s ) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
         User user = userRepository.findByName(s);
 
         System.out.print("这是用户登录");
         if (user == null) {
             throw new  UsernameNotFoundException("用户不存在");
         }
-//        获取用户的角色
-        List<Role> roles = user.getRoles();
-        Role role = roles.get(0);
-        String user_role_name = role.getRolename();
+////        获取用户的角色
+////        List<Role> roles = user.getRoles();
+////        Role role = roles.get(0);
+////        String user_role_name = role.getRolename();
         return user;
     }
 }

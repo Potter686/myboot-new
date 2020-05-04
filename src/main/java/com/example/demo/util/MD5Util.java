@@ -2,11 +2,7 @@ package com.example.demo.util;
 
 import java.security.MessageDigest;
 
-/**
- * Created by linziyu on 2018/5/15
- *MD5加密工具
- * .
- */
+
 public class MD5Util {
     private static final String SALT = "tamboo";
 

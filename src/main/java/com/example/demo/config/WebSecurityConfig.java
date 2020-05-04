@@ -1,6 +1,8 @@
 package com.example.demo.config;
 
+import com.example.demo.repository.UserRepository;
 import com.example.demo.service.SecurityService;
+import com.example.demo.service.UserService;
 import com.example.demo.util.MD5Util;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -24,8 +26,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @EnableWebSecurity//指定为Spring Security配置类
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter{
 
-
-
+    @Autowired
+    private UserService userService;
     @Bean
     UserDetailsService Service(){
         return new SecurityService();
@@ -45,7 +47,11 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter{
 
                 @Override
                 public boolean  matches(CharSequence charSequence, String s) {
+
+
+
                     return s.equals(MD5Util.encode((String)charSequence));
+//                    return s.equals(charSequence);
                 }
 
             });
@@ -59,7 +65,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter{
     protected void configure(HttpSecurity http) throws Exception {
         http.authorizeRequests().
                 //设置静态资源均可以访问
-                antMatchers("/css/**", "/js/**","/images/**", "/webjars/**", "**/favicon.ico","/nav","/index").permitAll()
+                antMatchers("/css/**", "/js/**","/images/**", "/webjars/**", "**/favicon.ico","http://192.168.137.105:3000").permitAll()
                 .anyRequest().authenticated().
                 and().
                 //指定登录认证的Controller

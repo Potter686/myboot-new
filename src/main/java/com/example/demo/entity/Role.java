@@ -5,12 +5,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
-/**
- * Created by linziyu on 2018/5/13
- *
- * 角色实体类
- *
- */
+
 
 @Entity
 @Table(name = "role1")
@@ -37,4 +32,6 @@ public class Role {
     public void setRolename(String rolename) {
         this.rolename = rolename;
     }
+
+
 }
