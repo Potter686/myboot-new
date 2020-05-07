@@ -35,7 +35,7 @@ public class DockerServiceImpl implements DockerService {
     @Override
     public DockerClient getClientCon(){
         return DockerClientBuilder
-                .getInstance("tcp://172.17.147.88:2375").build();
+                .getInstance("tcp://192.168.142.128:2375").build();
     }
 
     //创建并启动容器
@@ -84,7 +84,9 @@ public class DockerServiceImpl implements DockerService {
         }
         //在已经停止的容器中查询
         List<Container> containers1 = this.getALlStopContainer();
+
         for(Container container1:containers1){
+
             if (name.equals(container1.getNames()[0].replace("/",""))){
                 return "Stop";
             }

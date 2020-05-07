@@ -18,4 +18,7 @@ public interface UserService {
     void personCenterSet(String name ,int age ,String email,String telNum); //修改以及添加个人信息
 
      String startEx();  //开始实验
+
+     String  stopEx() ; // 停止实验
+     String  deleteEx(Map<String, Object> map); //删除容器
 }

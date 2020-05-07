@@ -28,7 +28,10 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import javax.jws.WebParam;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -111,17 +114,7 @@ public class WebController {
         userService.personCenterSet(name,age,email,telNum);
         return "index";
     }
-    @RequestMapping("/toPersonCenterSet")
-    public String test() {
-        dockerService.getALlStopContainer();
-        // 连接docker服务器
-//        DockerClient dockerClient = DockerClientBuilder
-//                .getInstance("tcp://172.17.187.102:2375").build();
-//        // 获取服务器信息
-//        Info info = dockerClient.infoCmd().exec();
-//        System.out.println(info);
-        return "index";
-    }
+
 
     @GetMapping("/startEx")
     public String experiment(ModelMap map){
@@ -134,6 +127,45 @@ public class WebController {
         return"redirect:http://"+url;
 
     }
+
+    @GetMapping("/stopEx")
+    public String stopEx( HttpServletResponse response)throws IOException{
+        String status = userService.stopEx();
+        response.setContentType("text/html;charset=utf-8");
+        PrintWriter out = response.getWriter();
+        if(status.equals("success")){
+            out.print("<script language=\"javascript\">alert('停止成功');window.location.href='index'</script>");
+            return "index";
+        }
+        else {
+            out.print("<script language=\"javascript\">alert('停止失败，容器不存');window.location.href='index'</script>");
+            return "index";
+        }
+    }
+
+    @GetMapping("/deleteEx")
+    public String deleteEx(Map<String, Object> map , HttpServletResponse response) throws IOException {
+        String status = userService.deleteEx(map);
+
+        response.setContentType("text/html;charset=utf-8");
+        PrintWriter out = response.getWriter();
+        if(status.equals("success")){
+            out.print("<script language=\"javascript\">alert('删除成功');window.location.href='index'</script>");
+            return "index";
+        }
+        else {
+            out.print("<script language=\"javascript\">alert('删除失败，容器不存');window.location.href='index'</script>");
+            return "index";
+        }
+    }
+    @GetMapping("/test")
+    public String test(){
+
+        return "test";
+    }
+
+
+
 
 
 

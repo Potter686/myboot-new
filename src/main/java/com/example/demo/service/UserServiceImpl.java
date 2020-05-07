@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
 import org.thymeleaf.model.IModel;
 
+import javax.xml.crypto.Data;
 import java.math.BigInteger;
 import java.sql.Connection;
 import java.util.*;
@@ -42,7 +43,7 @@ public class UserServiceImpl implements UserService{
     @Autowired
     private DockerService dockerService;
 
-    static String hostIp = "172.17.147.88";
+    static String hostIp = "192.168.142.128";
 
 
     //用户注册
@@ -184,29 +185,43 @@ public class UserServiceImpl implements UserService{
 
     public String  startEx(){
 
+        long startTime=System.currentTimeMillis();   //获取开始时间
+
         System.out.print("这里是开始实验");
         //获取用户名
 
         User user = this.getLoginUser();
         String userName = user.getUsername();
         Long id = user.getId();
-        System.out.print(userName);
-        System.out.print(id);
+
         //查询用户端口
         ExInfo exInfo = exInfoRepository.findExInfoById(id);
+
+        String status = dockerService.isExitContainerName(userName);
+
+        long endTime=System.currentTimeMillis(); //获取结束时间
+        System.out.println("程序运行时间1： "+(endTime-startTime)+"ms");
 
         //若有 则测试端口是否可用
         if (exInfo!=null){
 
             int port = exInfo.getPort();
             String nameFromPort = exInfo.getUserName();
+
             //查询用户容器是否存在
-            if(dockerService.isExitContainerName(userName).equals("Run")){
+            System.out.println("这里是容器状态：");
+            if(status.equals("Run")){
+                System.out.println("这里是容器run");
 //                dockerService.startContainerByName(userName);
                 return hostIp+':'+port;
             }
-            else if (dockerService.isExitContainerName(userName).equals("Stop")){
+            else if (status.equals("Stop")){
+                System.out.println("这里是容器停止");
                 dockerService.startContainerByName(userName);
+
+                long endTime1=System.currentTimeMillis(); //获取结束时间
+                System.out.println("程序运行时间2： "+(endTime1-endTime)+"ms");
+
                 return hostIp+':'+port;
             }
             //若不存在则创建容器并启动
@@ -219,21 +234,31 @@ public class UserServiceImpl implements UserService{
                     port = maxPort;
                     port = port+1;
                 }
+                long endTime3=System.currentTimeMillis(); //获取结束时间
+                System.out.println("程序运行时间4： "+(endTime3-endTime)+"ms");
+
                 ExInfo newExInfo = new ExInfo(id,port,userName);
                 exInfoRepository.save(newExInfo);
-
                 dockerService.createDocker(userName,port);
+
+                long endTime2=System.currentTimeMillis(); //获取结束时间
+                System.out.println("程序运行时间3： "+(endTime2-endTime3)+"ms");
+
+
                 return hostIp+":"+port;
             }
+
+
         }
+
         else {
 
             //查询用户容器是否存在
-            if(dockerService.isExitContainerName(userName).equals("Run")){
+            if(status.equals("Run")){
                 dockerService.stopByContainerName(userName);
                 dockerService.deleteByContainerName(userName);
             }
-            if (dockerService.isExitContainerName(userName).equals("Stop")){
+            if (status.equals("Stop")){
                 dockerService.deleteByContainerName(userName);
             }
             int maxPort = exInfoRepository.max().toBigInteger().intValue();
@@ -252,17 +277,53 @@ public class UserServiceImpl implements UserService{
 
 
     }
-
-    public void stopEx(){
+//停止容器
+    public String  stopEx(){
         User user = this.getLoginUser();
         String userName = user.getUsername();
-        Long id = user.getId();
-        ExInfo exInfo = exInfoRepository.findExInfoById(id);
+//        Long id = user.getId();
+//        ExInfo exInfo = exInfoRepository.findExInfoById(id);
+
+
+//        查询容器状态
+        String status = dockerService.isExitContainerName(userName);
+        if (status.equals("Run")){
+            dockerService.stopByContainerName(userName);
+            return "success";
+        }
+        else if (status.equals("Stop")){
+            return "success";
+        }
+        else {
+            return "failure";
+        }
 
 
 
+    }
 
-
+    //用户删除自己的容器
+    public String  deleteEx(Map<String, Object> map){
+        User user = this.getLoginUser();
+        String userName = user.getUsername();
+        //        查询容器状态
+        String status = dockerService.isExitContainerName(userName);
+        if (status.equals("Run")){
+            dockerService.stopByContainerName(userName);
+            dockerService.deleteByContainerName(userName);
+            return "success";
+//            map.put("stop","停止成功");
+        }
+        else if (status.equals("Stop")){
+            dockerService.deleteByContainerName(userName);
+            System.out.print("提示停止成功");
+            return "success";
+//            map.put("stop","停止成功");
+        }
+        else {
+            return "failure";
+//            System.out.println("容器不存在");
+        }
 
     }
 
