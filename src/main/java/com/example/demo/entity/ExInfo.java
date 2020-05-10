@@ -14,6 +14,7 @@ public class ExInfo {
     private Long id;
     private int port;
     private String userName;
+
     public ExInfo(Long id ,int port ,String userName){
         this.id=id;
         this.port =port;

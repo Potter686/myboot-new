@@ -43,7 +43,7 @@ public class UserServiceImpl implements UserService{
     @Autowired
     private DockerService dockerService;
 
-    static String hostIp = "192.168.142.128";
+    static String hostIp = "192.168.142.129";
 
 
     //用户注册
@@ -118,15 +118,16 @@ public class UserServiceImpl implements UserService{
 
     //显示所有用户
 
-    public void listAllUser(Model model){
+    public List<UserInfo> listAllUserInfo(Map<String, Object> map, Model model){
         System.out.print("这是显示所有用户");
-        User user = this.getLoginUser();
-        List<Role> roles = user.getRoles();
-        System.out.print(roles.get(0));
+//        User user = this.getLoginUser();
+//        List<Role> roles = user.getRoles();
+//        System.out.print(roles.get(0));
         List<UserInfo> userInfos = userInfoRepository.findAll();
+        map.put("userInfos",userInfos);
+        model.addAttribute("queue",userInfos);
+        return userInfos;
 
-        model.addAttribute("userInfos",userInfos);
-        System.out.print(userInfos);
 
     }
 
@@ -148,14 +149,15 @@ public class UserServiceImpl implements UserService{
     }
 
     //个人信息设置
-    public void  personCenterSet(String name ,int age ,String email,String telNum){
+    public void  personInfoSet(Long id ,String name ,int age ,String email,String telNum,String sex){
         //获取当前登录的用户
         System.out.print("这里是个人信息设置");
         System.out.print(name);
 //        System.out.print(userInfo);
         User userLogin = this.getLoginUser();
-        Long id = userLogin.getId();
-        UserInfo userInfo = new UserInfo(id,name,age,email,telNum);
+        String  role = userLogin.getRoles().get(0).toString();
+        String userName = userLogin.getUsername();
+        UserInfo userInfo = new UserInfo(id,name,userName,age,email,telNum,role,sex);
         userInfo.setId(id);
         System.out.print(userInfo);
         userInfoRepository.save(userInfo);

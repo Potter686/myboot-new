@@ -13,9 +13,9 @@ public interface UserService {
     String save(String  name , String password , String role, Model model);//保存用户
     Page<User> PageByUser(Integer page, Integer size);//对用户数据进行分页
     String resetPass(String password, Map<String, Object> map);   //重置密码
-    void listAllUser(Model model); //显示所有用户
+    List<UserInfo> listAllUserInfo(Map<String, Object> map,Model model); //显示所有用户
     User getLoginUser(); //获取当前登录的用户
-    void personCenterSet(String name ,int age ,String email,String telNum); //修改以及添加个人信息
+    void personInfoSet(Long id ,String name ,int age ,String email,String telNum,String sex); //修改以及添加个人信息
 
      String startEx();  //开始实验
 
