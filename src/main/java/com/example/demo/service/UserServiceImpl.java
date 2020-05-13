@@ -29,6 +29,7 @@ import java.sql.Connection;
 import java.util.*;
 
 
+
 @Service
 public class UserServiceImpl implements UserService{
 
@@ -43,7 +44,7 @@ public class UserServiceImpl implements UserService{
     @Autowired
     private DockerService dockerService;
 
-    static String hostIp = "192.168.142.129";
+    static String hostIp = "192.168.142.130";
 
 
     //用户注册
@@ -93,9 +94,6 @@ public class UserServiceImpl implements UserService{
     // 用户修改密码
     @Override
     public String resetPass(String password , Map<String, Object> map){
-
-
-
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         System.out.print("这里是用户修改密码");
         String passwordMD = MD5Util.encode(password);
@@ -132,7 +130,7 @@ public class UserServiceImpl implements UserService{
     }
 
 
-    //获取当前登录的用户
+    //获取当前登录的用户的账号信息
     public User getLoginUser(){
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (userDetails==null){
@@ -148,6 +146,14 @@ public class UserServiceImpl implements UserService{
         return user;
     }
 
+
+    //获取当前登录用户的个人信息
+
+    public UserInfo getMyInfo(){
+        Long id = this.getLoginUser().getId();
+        return userInfoRepository.findUserInfoById(id);
+    }
+
     //个人信息设置
     public void  personInfoSet(Long id ,String name ,int age ,String email,String telNum,String sex){
         //获取当前登录的用户
@@ -158,11 +164,13 @@ public class UserServiceImpl implements UserService{
         String  role = userLogin.getRoles().get(0).toString();
         String userName = userLogin.getUsername();
         UserInfo userInfo = new UserInfo(id,name,userName,age,email,telNum,role,sex);
-        userInfo.setId(id);
         System.out.print(userInfo);
         userInfoRepository.save(userInfo);
 
     }
+
+
+
 /*
     //开始实验
     *//*首先判断登录的用户是否已经分配端口
@@ -187,7 +195,6 @@ public class UserServiceImpl implements UserService{
 
     public String  startEx(){
 
-        long startTime=System.currentTimeMillis();   //获取开始时间
 
         System.out.print("这里是开始实验");
         //获取用户名
@@ -201,8 +208,6 @@ public class UserServiceImpl implements UserService{
 
         String status = dockerService.isExitContainerName(userName);
 
-        long endTime=System.currentTimeMillis(); //获取结束时间
-        System.out.println("程序运行时间1： "+(endTime-startTime)+"ms");
 
         //若有 则测试端口是否可用
         if (exInfo!=null){
@@ -220,9 +225,12 @@ public class UserServiceImpl implements UserService{
             else if (status.equals("Stop")){
                 System.out.println("这里是容器停止");
                 dockerService.startContainerByName(userName);
-
-                long endTime1=System.currentTimeMillis(); //获取结束时间
-                System.out.println("程序运行时间2： "+(endTime1-endTime)+"ms");
+                for (int num = 0 ;num < 5;num ++){
+                    boolean portStatus  = dockerService.isHostConnectable(hostIp,port);
+                    if (!portStatus){
+                        break;
+                    }
+                }
 
                 return hostIp+':'+port;
             }
@@ -236,15 +244,17 @@ public class UserServiceImpl implements UserService{
                     port = maxPort;
                     port = port+1;
                 }
-                long endTime3=System.currentTimeMillis(); //获取结束时间
-                System.out.println("程序运行时间4： "+(endTime3-endTime)+"ms");
-
                 ExInfo newExInfo = new ExInfo(id,port,userName);
                 exInfoRepository.save(newExInfo);
                 dockerService.createDocker(userName,port);
 
-                long endTime2=System.currentTimeMillis(); //获取结束时间
-                System.out.println("程序运行时间3： "+(endTime2-endTime3)+"ms");
+
+                for (int num = 0 ;num < 5;num ++){
+                    boolean portStatus  = dockerService.isHostConnectable(hostIp,port);
+                    if (!portStatus){
+                        break;
+                    }
+                }
 
 
                 return hostIp+":"+port;
@@ -274,6 +284,17 @@ public class UserServiceImpl implements UserService{
             ExInfo exInfo1 = new ExInfo(id,port,userName);
             exInfoRepository.save(exInfo1);
             dockerService.createDocker(userName,port);
+
+
+
+
+            for (int num = 0 ;num < 5;num ++){
+                boolean portStatus  = dockerService.isHostConnectable(hostIp,port);
+                if (!portStatus){
+                    break;
+                }
+            }
+
             return hostIp+":"+port;
         }
 

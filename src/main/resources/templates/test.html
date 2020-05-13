@@ -1,44 +1,100 @@
 <!DOCTYPE html>
-<html>
+<html xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
-    <meta charset="utf-8">
-    <title>layui.form小例子</title>
-    <link rel="stylesheet" href="/layui/css/layui.css" media="all">
+    <script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script>
+
+    <script src="https://cdn.staticfile.org/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+    <div class="modal fade" id="mySetDiv">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">修改个人信息</div>
+                <form class="form-horizontal" th:action="@{/register}"  method="post">
+                    <div class="modal-body">
+
+                        <div class="form-group">
+                            <!--                        <label for="inputEmail" class="col-sm-2 control-label">Email</label>-->
+                            <div class="col-sm-10">
+                                <input  type="text" class="form-control list-inline" placeholder="UserName" name="name" id ="name" />
+                            </div>
+                        </div>
+
+
+                        <div class="form-group">
+                            <div class="col-sm-10">
+                                <select class="form-control list-inline" name="role" id="role">
+                                    <option>Role_ADMIN</option>
+                                    <option>ROLE_USER</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="col-sm-10">
+                                <input  type="password" class="form-control list-inline" placeholder="Password"  name="password" id="password"/>
+                            </div>
+                        </div>
+
+
+                    </div>
+
+                    <div class="modal-footer">
+                        <button class="btn btn-success" type="submit">Save</button>
+                        <button class="btn btn-warning" type="reset">Reset</button>
+                        <button class="btn btn-danger" data-dismiss="modal">Cancel</button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
 </head>
 <body>
 
 
-<button lay-submit lay-filter="*">提交</button>
 
-<script src="/layui/layui.js"></script>
-<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
 
+
+<li><a id="mySet" href="#">个人信息</a></li>
+
+
+<button lay-submit lay-filter="start" ng-click="newFile()">提交</button>
+
+
+<div >
+    <input id ='sendComment' />
+</div>
 
 <script>
 
-    layui.use('form', function(){
-        var form = layui.form;
-        form.on('submit(start)', function(data){
-            test();
-            console.log(data.elem); //被执行事件的元素DOM对象，一般为button对象
-            console.log(data.form) ;//被执行提交的form对象，一般在存在form标签时才会返回
-            console.log(data.field) ;//当前容器的全部表单字段，名值对形式：{name: value}
-            return false; //阻止表单跳转。如果需要表单跳转，去掉这段即可。
 
+    function getMyinfo() {
+        var datas =null;
+        $.ajax({
+            url: 'toPersonCenterSet',
+            type: 'get',
+            async:false, //这句必须写，同步处理**
+            dataType: 'json',
+            success: function (data) {
+                // console.log(datas.data[0].sex);
+                datas = data;
+            }
         });
-        function test() {
-            layer.open({
-                type: 2 ,
-                area:["900px",'800px'],
-                content: 'http://192.168.142.129:10001/#flow/e2651e24.4d8ff'   //这里content是一个URL，如果你不想让iframe出现滚动条，你还可以content: ['http://sentsin.com', 'no']
-            });
-        }
+        return datas;
+    }
 
-        //各种基于事件的操作，下面会有进一步介绍
+    console.log("123");
+    var ssfds = fs();
+    console.log(ssfds);
+    $("#sendComment").attr('placeholder',ssfds.data[0].sex);
+
+
+    $(document).ready(function(){
+        $("#mySet").click(function(){
+            $("#mySetDiv").modal("show")
+        })
     });
-
-
-
 
 </script>
 

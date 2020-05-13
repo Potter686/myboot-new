@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
 
+import javax.jws.WebParam;
 import javax.persistence.Id;
 import java.util.Collection;
 import java.util.List;
@@ -29,6 +30,7 @@ public class SecurityService implements UserDetailsService{
     @Override
     public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
         User user = userRepository.findByName(s);
+
 
         System.out.print("这是用户登录");
         if (user == null) {

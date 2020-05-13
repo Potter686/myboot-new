@@ -12,8 +12,11 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import sun.plugin.liveconnect.SecurityContextHelper;
 
 
 /**
@@ -47,9 +50,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter{
 
                 @Override
                 public boolean  matches(CharSequence charSequence, String s) {
-
-
-
+                    System.out.println("这里是登录验证");
                     return s.equals(MD5Util.encode((String)charSequence));
 //                    return s.equals(charSequence);
                 }

@@ -126,17 +126,36 @@ public class WebController {
     public String toPersonCenterSet  (){return "toPersonCenterSet"; }
 
 
-
-
-
-
-    @RequestMapping("/personInfoSet")
+    @RequestMapping("/getMyInfo")
     @ResponseBody
-    public String personInfoSet(HttpServletRequest request,@RequestParam String name ,int age ,String email,String telNum,String sex) {
+    public String getMyInfo(Map<String, Object> map,Model model) throws JSONException {
+        UserInfo userInfos = userService.getMyInfo();
+        JSONObject jsonpObject = new JSONObject();
+        jsonpObject.put("code",0);
+        jsonpObject.put("msg","");
+        jsonpObject.put("count",1000);
+        jsonpObject.put("data",userInfos);
+        return jsonpObject.toJSONString();
+    }
+
+
+
+
+
+//,String email,String telNum,String sex
+    @RequestMapping("/personInfoSet")
+    public String personInfoSet(HttpServletResponse response, String name ,int age,String email,String telNum,String sex )throws IOException {
+        System.out.println("这里是个人信息设置");
+        System.out.println(name);
         User user = userService.getLoginUser();
         Long id = user.getId();
         userService.personInfoSet(id,name,age,email,telNum,sex);
-        return "-1";
+        response.setContentType("text/html;charset=utf-8");
+        PrintWriter out = response.getWriter();
+        out.print("<script language=\"javascript\">alert('设置成功');window.location.href='index'</script>");
+
+//        return "-1";
+        return "index";
     }
 
 

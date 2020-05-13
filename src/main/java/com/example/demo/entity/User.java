@@ -1,15 +1,22 @@
 package com.example.demo.entity;
 
+import com.example.demo.repository.UserRepository;
 import lombok.Data;
+import org.bouncycastle.math.raw.Mod;
+import org.hibernate.mapping.Map;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.ui.Model;
 
+import javax.jws.WebParam;
 import javax.persistence.*;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 
 
@@ -17,6 +24,7 @@ import java.util.List;
 @Data
 @Table(name = "user1") //设置对应表名字
 public class User implements UserDetails{
+
 
     //主键及自动增长
     @Id
@@ -76,13 +84,15 @@ public class User implements UserDetails{
     //根据自定义逻辑来返回用户权限，如果用户权限返回空或者和拦截路径对应权限不同，验证不通过
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
+
         List<GrantedAuthority> authorities = new ArrayList<>();
         List<Role> roles = this.getRoles();
         for (Role role : roles) {
             authorities.add(new SimpleGrantedAuthority(role.getRolename()));
         }
+
         System.out.print("这是拦截器");
-        System.out.print(authorities);
+
         return authorities;
     }
     //获取当前用户实例的name

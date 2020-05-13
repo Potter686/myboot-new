@@ -4,6 +4,7 @@ package com.example.demo.config;
 //自定义多角色登录成功的跳转页面
 import com.example.demo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.support.JpaRepositoryImplementation;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -21,11 +22,15 @@ public class LoginSuccessHandle implements AuthenticationSuccessHandler {
                                         HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
 
         Set<String> roles = AuthorityUtils.authorityListToSet(authentication.getAuthorities());
-        String path = request.getContextPath();
         System.out.print("这里是登录成功处");
+        System.out.println( AuthorityUtils.authorityListToSet(authentication.getAuthorities()));
+        String path = request.getContextPath();
+
+
         String basePath = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + path + "/";
         if (roles.contains("Role_ADMIN")) {
             response.sendRedirect(basePath + "index");
+
             return;
         }
         response.sendRedirect(basePath + "index_user");

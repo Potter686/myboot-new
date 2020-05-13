@@ -35,7 +35,7 @@ public class DockerServiceImpl implements DockerService {
     @Override
     public DockerClient getClientCon(){
         return DockerClientBuilder
-                .getInstance("tcp://192.168.142.129:2375").build();
+                .getInstance("tcp://192.168.142.130:2375").build();
     }
 
     //创建并启动容器

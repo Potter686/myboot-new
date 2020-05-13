@@ -21,4 +21,6 @@ public interface UserService {
 
      String  stopEx() ; // 停止实验
      String  deleteEx(Map<String, Object> map); //删除容器
+
+    public UserInfo getMyInfo ();//获取个人新
 }

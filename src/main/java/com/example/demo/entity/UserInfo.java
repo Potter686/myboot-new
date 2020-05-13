@@ -27,15 +27,15 @@ public class UserInfo {
 
     @ApiModelProperty("name")
     @NotEmpty
-    @Size(min=2,max = 6)
+//    @Size(min=2,max = 6)
     private String name;  //用户姓名
 
     private String userName;
 
-    @Max(100)
-    @Min(0)
+//    @Max(100)
+//    @Min(0)
     private int age;
-    @Email
+//    @Email
     @NotEmpty
     private String email;
     private String role ;

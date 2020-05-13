@@ -10,9 +10,4 @@ import javax.transaction.Transactional;
 
 public interface UserRepository extends JpaRepository<User,Long>{
     User findByName(String name);
-
-
-//    @Query("update user1 u where u.name=:name")
-//    User findUser(@Param("name") String name);
-
 }
