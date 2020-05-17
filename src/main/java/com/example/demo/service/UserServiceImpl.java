@@ -11,6 +11,7 @@ import com.example.demo.repository.UserRepository;
 import com.example.demo.service.docker.DockerService;
 import com.example.demo.util.MD5Util;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -44,7 +45,9 @@ public class UserServiceImpl implements UserService{
     @Autowired
     private DockerService dockerService;
 
-    static String hostIp = "192.168.142.130";
+
+    @Value("${docker.ip}")
+    private String hostIp;
 
 
     //用户注册
@@ -161,7 +164,9 @@ public class UserServiceImpl implements UserService{
         System.out.print(name);
 //        System.out.print(userInfo);
         User userLogin = this.getLoginUser();
-        String  role = userLogin.getRoles().get(0).toString();
+        String   role = userLogin.getRoles().get(0).getRolename().toString();
+        System.out.println(role);
+
         String userName = userLogin.getUsername();
         UserInfo userInfo = new UserInfo(id,name,userName,age,email,telNum,role,sex);
         System.out.print(userInfo);

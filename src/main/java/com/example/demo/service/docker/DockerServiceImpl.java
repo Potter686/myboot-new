@@ -28,14 +28,19 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Value;
+
 
 @Service
 public class DockerServiceImpl implements DockerService {
 
+    @Value("${docker.ip}")
+    private String dockerIp;
+
     @Override
     public DockerClient getClientCon(){
         return DockerClientBuilder
-                .getInstance("tcp://192.168.142.130:2375").build();
+                .getInstance("tcp://{dockeIP}:2375".format(dockerIp)).build();
     }
 
     //创建并启动容器

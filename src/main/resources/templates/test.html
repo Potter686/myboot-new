@@ -1,102 +1,203 @@
-<!DOCTYPE html>
-<html xmlns:th="http://www.w3.org/1999/xhtml">
+<!doctype html>
+<html lang="zh-CN">
 <head>
-    <script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script>
-
-    <script src="https://cdn.staticfile.org/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
-
-    <div class="modal fade" id="mySetDiv">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">修改个人信息</div>
-                <form class="form-horizontal" th:action="@{/register}"  method="post">
-                    <div class="modal-body">
-
-                        <div class="form-group">
-                            <!--                        <label for="inputEmail" class="col-sm-2 control-label">Email</label>-->
-                            <div class="col-sm-10">
-                                <input  type="text" class="form-control list-inline" placeholder="UserName" name="name" id ="name" />
-                            </div>
-                        </div>
-
-
-                        <div class="form-group">
-                            <div class="col-sm-10">
-                                <select class="form-control list-inline" name="role" id="role">
-                                    <option>Role_ADMIN</option>
-                                    <option>ROLE_USER</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <div class="col-sm-10">
-                                <input  type="password" class="form-control list-inline" placeholder="Password"  name="password" id="password"/>
-                            </div>
-                        </div>
-
-
-                    </div>
-
-                    <div class="modal-footer">
-                        <button class="btn btn-success" type="submit">Save</button>
-                        <button class="btn btn-warning" type="reset">Reset</button>
-                        <button class="btn btn-danger" data-dismiss="modal">Cancel</button>
-                    </div>
-                </form>
-
-            </div>
-        </div>
-    </div>
-
+    <script src="http://lib.sinaapp.com/js/jquery/1.9.1/jquery-1.9.1.min.js"></script>
+    <script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts/echarts-all-3.js"></script>
 </head>
 <body>
-
-
-
-
-
-<li><a id="mySet" href="#">个人信息</a></li>
-
-
-<button lay-submit lay-filter="start" ng-click="newFile()">提交</button>
-
-
-<div >
-    <input id ='sendComment' />
-</div>
-
-<script>
-
-
-    function getMyinfo() {
-        var datas =null;
-        $.ajax({
-            url: 'toPersonCenterSet',
-            type: 'get',
-            async:false, //这句必须写，同步处理**
-            dataType: 'json',
-            success: function (data) {
-                // console.log(datas.data[0].sex);
-                datas = data;
+<div id="main" style="width: 1300px; height: 600px;"></div>
+<script type="text/javascript">
+    var myChart = echarts.init(document.getElementById('main'));
+    // 显示标题，图例和空的坐标轴
+    myChart.setOption({
+        title: {
+            text: '集群信息'
+        },
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                animation: false
             }
-        });
-        return datas;
-    }
-
-    console.log("123");
-    var ssfds = fs();
-    console.log(ssfds);
-    $("#sendComment").attr('placeholder',ssfds.data[0].sex);
-
-
-    $(document).ready(function(){
-        $("#mySet").click(function(){
-            $("#mySetDiv").modal("show")
-        })
+        },
+        legend: {
+            data: ['内存使用率']
+        },
+        xAxis: {
+            data: []
+        },
+        yAxis: {},
+        series: [{
+            name: '内存使用率',
+            type: 'bar',
+            data: []
+        }]
+            // {
+            //     name: '温度',
+            //     type: 'bar',
+            //     data: []
+            // }],
     });
 
-</script>
+    myChart.showLoading();    //数据加载完之前先显示一段简单的loading动画
 
+    var times = [];    //时间数组（实际用来盛放X轴坐标值）
+    var Tems = [];    //温度数组（实际用来盛放Y坐标值）
+    var Tums = [];    //湿度数组（实际用来盛放Y坐标值）
+    // var LOGGER_SN = "LOGS_HS320BI013";
+    setInterval(function () {
+        $.ajax({
+            type: "get",
+            async: true,            //异步请求（同步请求将会锁住浏览器，用户其他操作必须等待请求完成才可以执行）
+            url: 'getNodeInfo', //请求页面的URL，此页面即为上面所述提供JSON数据的页面，传递参数ShowChart，后台解析并调用相应的函数
+            dataType: "json",        //返回数据形式为json
+            success: function (result) {
+                //请求成功时执行该函数内容，result即为服务器返回的json对象
+                    times = [];
+                memUsage = [];
+                    Tums = [];
+                    for(var i= 0;i < result.data.length;i++) {
+                        var jsonResult = eval("(" + result.data[i] + ")");
+                        times.push(jsonResult.date);    //挨个取出时间并填入类别数组
+                        memUsage.push(jsonResult.data.memUsage);    //挨个取出温度并填入销量数组
+                        // Tums.push(jsonResult.data.freeMem);  //挨个取出湿度并填入销量数组
+                    }
+                    myChart.hideLoading();    //隐藏加载动画
+                    myChart.setOption({        //加载数据图表
+                        xAxis: {
+                            data: times
+                        },
+                        series: [{
+                            // 根据名字对应到相应的系列
+                            type: 'line',
+                            name: '内存使用率',
+                            data: memUsage
+
+                        }
+                        // },
+                        //     {
+                        //         // 根据名字对应到相应的系列
+                        //         type: 'line',
+                        //         name: '湿度',
+                        //         data: Tums
+                        //     }
+                        ]
+                    });
+
+
+            },
+            error: function (errorMsg) {
+                //请求失败时执行该函数
+                //alert("图表请求数据失败!");
+                console.log("错误");
+                myChart.hideLoading();
+            }
+        })
+    }, 5000);
+</script>
 </body>
+
+
+
+<!--<body>-->
+<!--<button onclick="f()" href="#">ssadfa</button>-->
+<!--&lt;!&ndash; 为ECharts准备一个具备大小（宽高）的Dom &ndash;&gt;-->
+<!--<div id="main" style="height:400px"></div>-->
+<!--&lt;!&ndash; ECharts单文件引入 &ndash;&gt;-->
+<!--<script src="http://echarts.baidu.com/build/dist/echarts.js"></script>-->
+<!--<script type="text/javascript">-->
+<!--    // 路径配置-->
+<!--    require.config({-->
+<!--        paths: {-->
+<!--            echarts: 'http://echarts.baidu.com/build/dist'-->
+<!--        }-->
+<!--    });-->
+
+<!--    // 使用-->
+<!--    require(-->
+<!--        [-->
+<!--            'echarts',-->
+<!--            'echarts/chart/bar' // 使用柱状图就加载bar模块，按需加载-->
+<!--        ],-->
+<!--        function (ec) {-->
+<!--            // 基于准备好的dom，初始化echarts图表-->
+<!--            var myChart = ec.init(document.getElementById('main'));-->
+
+<!--            myChart.setOption({-->
+<!--                title: {-->
+<!--                    text: '异步数据加载示例'-->
+<!--                },-->
+<!--                tooltip: {},-->
+<!--                legend: {-->
+<!--                    data:['销量']-->
+<!--                },-->
+<!--                xAxis: {-->
+<!--                    data: []-->
+<!--                },-->
+<!--                yAxis: {},-->
+<!--                series: [{-->
+<!--                    name: '销量',-->
+<!--                    type: 'bar',-->
+<!--                    data: []-->
+<!--                }]-->
+<!--            });-->
+<!--            // 异步加载数据-->
+<!--            // $.get(f()).done(function (data) {-->
+<!--            //     console.log("123");-->
+<!--            //     console.log(data);-->
+<!--            //     // 填入数据-->
+<!--            //     myChart.setOption({-->
+<!--            //         xAxis: {-->
+<!--            //             data: data.data-->
+<!--            //         },-->
+<!--            //         series: [{-->
+<!--            //             // 根据名字对应到相应的系列-->
+<!--            //             name: '销量',-->
+<!--            //             data: data.data-->
+<!--            //         }]-->
+<!--            //     });-->
+<!--            // });-->
+
+
+<!--        }-->
+<!--    );-->
+
+<!--    function f() {-->
+<!--        var getting = {-->
+
+<!--            url:'test',-->
+
+<!--            dataType:'json',-->
+
+<!--            success:function(res) {-->
+<!--                console.log(res);-->
+<!--                if(res.code=200){-->
+
+<!--                    myChart.setOption({        //加载数据图表-->
+<!--                        xAxis: {-->
+<!--                            data: "123"-->
+<!--                        },-->
+<!--                        series: [{-->
+<!--                            // 根据名字对应到相应的系列-->
+<!--                            type: 'line',-->
+<!--                            name: '温度',-->
+<!--                            data: res.data.freeMem-->
+<!--                        }-->
+
+<!--                        ]-->
+<!--                    });-->
+
+
+<!--                }else{-->
+<!--                    console.log(res);-->
+<!--                }-->
+<!--            }-->
+
+<!--        };-->
+<!--        //关键在这里，Ajax定时访问服务端，不断获取数据 ，这里是3秒请求一次。-->
+<!--        window.setInterval(function(){$.ajax(getting)},3000);-->
+<!--    }-->
+<!--</script>-->
+<!--</body>-->
+
+
 </html>

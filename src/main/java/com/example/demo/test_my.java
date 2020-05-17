@@ -2,25 +2,48 @@ package com.example.demo;
 
 import com.example.demo.repository.ExInfoRepository;
 import com.example.demo.service.docker.DockerService;
-import org.springframework.beans.factory.annotation.Autowired;
-import lombok.extern.slf4j.Slf4j;
+import com.example.demo.service.node.NodeService;
+import io.swagger.annotations.Scope;
 import org.junit.Assert;
-import org.junit.Before;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
+
+
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
+
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.stereotype.Component;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.sql.DataSource;
-import java.util.List;
+import org.springframework.beans.factory.annotation.Value;
+
+
+import ch.ethz.ssh2.Connection;
+import ch.ethz.ssh2.Session;
+import java.io.*;
+
+
 @RunWith(SpringRunner.class)
 @SpringBootTest
+
+
 public class test_my {
+//    @Autowired
+//    private DockerService dockerService;
+//    @Autowired
+//    private ExInfoRepository exInfoRepository;
+
     @Autowired
-    private DockerService dockerService;
+    private NodeService nodeService;
+
     @Autowired
-    private ExInfoRepository exInfoRepository;
+    private StringRedisTemplate stringRedisTemplate;
+
+
+
+
     @Test
     public void test_adfads(){
 
@@ -29,9 +52,17 @@ public class test_my {
 //        System.out.print( dockerService.isHostConnectable("172.17.187.102",12312));
 //        System.out.print(dockerService.createDocker("12312",12345));
 //        System.out.print(dockerService.createDocker("123122",12345));
-        System.out.print(exInfoRepository.max());
+//        System.out.println(ip);
+        stringRedisTemplate.opsForValue().set("bbb", "123");
+        Connection connection=nodeService.sshConnect();
+//        nodeService.getSysMemInfo(connection);
+//        Assert.assertEquals("111", stringRedisTemplate.opsForValue().get("aaa"));
+//        System.out.println(nodeService.sshConnect());
 
-        System.out.print(exInfoRepository.findExInfoById(3L));
+
+
+//
+//        System.out.print(exInfoRepository.findExInfoById(3L));
 
     }
 }

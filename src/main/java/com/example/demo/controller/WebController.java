@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 
 import ch.qos.logback.core.net.server.Client;
+import com.alibaba.fastjson.JSON;
 import com.example.demo.entity.Role;
 import com.example.demo.entity.User;
 import com.example.demo.entity.UserInfo;
@@ -12,9 +13,11 @@ import com.example.demo.service.UserService;
 import com.example.demo.service.docker.DockerService;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.example.demo.service.node.NodeService;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.json.JSONException;
-
+import ch.ethz.ssh2.Connection;
+import ch.ethz.ssh2.Session;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -27,6 +30,8 @@ import javax.servlet.http.HttpServletResponse;
 import javax.xml.transform.Result;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +56,8 @@ public class WebController {
     @Autowired
     private UserInfoRepository userInfoRepository;
 
-
+    @Autowired
+    private NodeService nodeService;
 
 
     @RequestMapping("/index")
@@ -116,8 +122,6 @@ public class WebController {
         jsonpObject.put("count",1000);
         jsonpObject.put("data",userInfos);
         return jsonpObject.toJSONString();
-
-
 
 
     }
@@ -194,7 +198,6 @@ public class WebController {
     }
 
 
-
 //    @RequestMapping("/questionnaire/addOption")
 //    public String addOption(@ModelAttribute Option option,String optionName,HttpServletRequest request,Integer topicId,Model model)throws Exception {
 //        System.out.println("yes22"+topicId);
@@ -209,9 +212,6 @@ public class WebController {
 //          model.addAttribute("pageInfo", pageInfo);*/这个是分页，
 //        return "ok“;//返会一个字符串，如果像跳转到指定页面，也可以。
 //    }
-
-
-
 
     @GetMapping("/deleteEx")
     public String deleteEx(Map<String, Object> map , HttpServletResponse response) throws IOException {
@@ -228,10 +228,44 @@ public class WebController {
             return "index";
         }
     }
-    @GetMapping("/test")
-    public String test(){
 
+//    @RequestMapping("/toTest")
+//    public String toTest(){
+//        return "test";
+//    }
+
+    @RequestMapping("/toTest")
+    public String test(){
+        System.out.println("这里是获取集群信息");
+        nodeService.getSysMemInfo();
         return "test";
+    }
+    @RequestMapping("/getNodeInfo")
+    @ResponseBody
+    public String getNodeInfo(){
+        System.out.println("这里是获取redis 信息");
+        List<String> list = nodeService.getFromRedis();
+
+//
+//        for (String str :list){
+//
+//    }
+
+//        String test = JSON.toJSONString(list);
+//
+//        String data04 = StringEscapeUtils.unescapeJava(test);
+//
+//        System.out.println(data04);
+
+        JSONObject jsonpObject = new JSONObject();
+        jsonpObject.put("code",0);
+        jsonpObject.put("msg","");
+        jsonpObject.put("count",1000);
+        jsonpObject.put("data",list);
+//        System.out.println(jsonpObject.get(array));
+
+//        System.out.println(jsonpObject.toJSONString().replace("\\",""));
+        return jsonpObject.toJSONString();
     }
 
 
