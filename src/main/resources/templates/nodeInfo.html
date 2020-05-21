@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <script src="http://lib.sinaapp.com/js/jquery/1.9.1/jquery-1.9.1.min.js"></script>
+    <script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts/echarts-all-3.js"></script>
+    <link rel="stylesheet" href="/layui/css/layui.css"  media="all">
+    <script src="/layui/layui.js" charset="utf-8"></script>
+</head>
+<body>
+
+
+
+<div class="x-body layui-form" style="width: 1300px; height: 50px;" >
+    <select name="classifyId"  id="classifyId" lay-filter="region-dropdown">
+    </select>
+</div>
+<div id="main" style="width: 1300px; height: 600px;"></div>
+
+<script type="text/javascript">
+    var host ="";
+    var myChart = echarts.init(document.getElementById('main'));
+    // 显示标题，图例和空的坐标轴
+    myChart.setOption({
+        title: {
+
+            text:"节点信息"
+        },
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                animation: false
+            }
+        },
+        legend: {
+            data: ['内存使用率','剩余内存','总内存','系统Cpu使用率','空闲Cpu使用率']
+        },
+        xAxis: {
+            data: []
+        },
+        yAxis: {},
+        series: [{
+            name: '内存使用率',
+            type: 'bar',
+            data: []
+        },
+            {
+                name: '剩余内存',
+                type: 'bar',
+                data: []
+            },
+            {
+                name: '总内存',
+                    type: 'bar',
+                data: []
+            },
+            {
+                name: '系统Cpu使用率',
+                type: 'bar',
+                data: []
+            },
+            {
+                name: '空闲Cpu使用率',
+                type: 'bar',
+                data: []
+            }
+
+        ],
+    });
+
+    myChart.showLoading();    //数据加载完之前先显示一段简单的loading动画
+
+    var times = [];    //时间数组（实际用来盛放X轴坐标值）
+    var Tems = [];    //温度数组（实际用来盛放Y坐标值）
+    var Tums = [];    //湿度数组（实际用来盛放Y坐标值）
+    // var LOGGER_SN = "LOGS_HS320BI013";
+    setInterval(function () {
+        $.ajax({
+            type: "get",
+            async: true,            //异步请求（同步请求将会锁住浏览器，用户其他操作必须等待请求完成才可以执行）
+            url: 'getNodeInfo', //请求页面的URL，此页面即为上面所述提供JSON数据的页面，传递参数ShowChart，后台解析并调用相应的函数
+            dataType: "json",        //返回数据形式为json
+            success: function (result) {
+                //请求成功时执行该函数内容，result即为服务器返回的json对象
+                times = [];
+                memUsage = [];
+                freeMem = [];
+                cpuUsage= [];
+                memTotal = [];
+                cpuSys=[];
+                cpuIdle=[];
+                var data = result.data;
+
+                for(var k in data){
+                    if (k == host) {
+                        for (var i in data[k]) {
+                            // for(var i= 0;i < data[l].length;i++) {
+                            var jsonResult = eval("(" + data[k][i] + ")");
+                            times.push(jsonResult.data.date);    //挨个取出时间并填入类别数组
+                            memUsage.push(jsonResult.data.memUsed);    //挨个取出温度并填入销量数组
+                            freeMem.push(jsonResult.data.memFree);  //挨个取出湿度并填入销量数组
+                            memTotal.push(jsonResult.data.memTotal);
+                            cpuSys.push(jsonResult.data.cpuSys);
+                            cpuIdle.push(jsonResult.data.cpuIdle);
+
+                            // cpuUsage.push(jsonResult.data.cpuUsage);
+
+                            myChart.hideLoading();    //隐藏加载动画
+                            myChart.setOption({        //加载数据图表
+                                xAxis: {
+                                    data: times
+                                },
+                                series: [{
+                                    // 根据名字对应到相应的系列
+                                    type: 'line',
+                                    name: '内存使用率',
+                                    data: memUsage
+
+                                },
+                                    {
+                                        // 根据名字对应到相应的系列
+                                        type: 'line',
+                                        name: '剩余内存',
+                                        data: freeMem
+                                    },
+                                    {
+                                        // 根据名字对应到相应的系列
+                                        type: 'line',
+                                        name: '总内存',
+                                        data: memTotal
+                                    },
+                                    {
+                                        // 根据名字对应到相应的系列
+                                        type: 'line',
+                                        name: '系统Cpu使用率',
+                                        data: cpuSys
+                                    },
+                                    {
+                                        // 根据名字对应到相应的系列
+                                        type: 'line',
+                                        name: '空闲Cpu使用率',
+                                        data: cpuIdle
+                                    }
+                                ]
+                            });
+                        }
+                    }
+                }
+                layui.use(['form'], function(){
+                    var $ = layui.$
+                        ,form = layui.form;
+
+                    //监听地区下拉
+                    form.on('select(region-dropdown)', function(data){
+                        host=data.value;
+                        console.log(host);
+                        myChart.showLoading();
+
+                    })
+                    // ap-chengdu
+                })
+
+            },
+            error: function (errorMsg) {
+                //请求失败时执行该函数
+                //alert("图表请求数据失败!");
+                console.log("错误");
+                myChart.hideLoading();
+            }
+        })
+    }, 5000);
+
+
+</script>
+
+<!--<div class="x-body layui-form" >-->
+<!--    <select name="classifyId" id="classifyId" lay-filter="region-dropdown">-->
+<!--        <option value="">请选择</option>-->
+<!--    </select>-->
+<!--</div>-->
+<script>
+    layui.use(['layer', 'jquery', 'form'], function(){
+        getClassify();
+    });
+    function getClassify(){
+        $.ajax({
+            url:"getNodeIp",
+            success:function(res){
+                // if(res.success){
+                    var data = eval("(" + res + ")");
+                    console.log(data.data);
+
+                    for(var i in data.data){
+                        console.log(data.data[i]);
+                        $("#classifyId").append("<option value=\""+data.data[i]+"\">"+data.data[i]+"</option>");
+                    }
+                     $("#classifyId").val(data.data[0]);
+
+                    if ( $("#classifyId").val()!=host){
+                        // window.location.reload();
+                    }
+                    host = $("#classifyId").val();
+                     var form = layui.form;
+
+                    //重新渲染
+                    layui.form.render("select");
+
+
+            }
+        });
+    }
+
+
+</script>
+
+<script>
+
+</script>
+
+
+</body>
+</html>

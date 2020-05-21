@@ -3,12 +3,8 @@ package com.example.demo.controller;
 
 import ch.qos.logback.core.net.server.Client;
 import com.alibaba.fastjson.JSON;
-import com.example.demo.entity.Role;
-import com.example.demo.entity.User;
-import com.example.demo.entity.UserInfo;
-import com.example.demo.repository.RoleRepository;
-import com.example.demo.repository.UserInfoRepository;
-import com.example.demo.repository.UserRepository;
+import com.example.demo.entity.*;
+import com.example.demo.repository.*;
 import com.example.demo.service.UserService;
 import com.example.demo.service.docker.DockerService;
 import com.alibaba.fastjson.JSONArray;
@@ -19,6 +15,7 @@ import org.json.JSONException;
 import ch.ethz.ssh2.Connection;
 import ch.ethz.ssh2.Session;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.ui.ModelMap;
@@ -31,10 +28,7 @@ import javax.xml.transform.Result;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 @Controller
@@ -58,10 +52,15 @@ public class WebController {
 
     @Autowired
     private NodeService nodeService;
+    @Autowired
+    private ExInfoRepository exInfoRepository;
+
+    @Autowired
+    private NodeInfoReposotory nodeInfoReposotory;
 
 
     @RequestMapping("/index")
-    public String index(Model model) {
+    public String index() {
         return "index";
     }
 
@@ -163,6 +162,39 @@ public class WebController {
     }
 
 
+
+    @RequestMapping("/addNode")
+    public String addNode(HttpServletResponse response, String host ,String sshUser,String sshPass,int sshPort )throws IOException {
+        System.out.println("这里是添加容器");
+        List<NodeInfo> nodeInfos=nodeInfoReposotory.findAll();
+        for (NodeInfo nodeInfo1:nodeInfos){
+            if (nodeInfo1.getIp().equals(host)){
+                response.setContentType("text/html;charset=utf-8");
+                PrintWriter out = response.getWriter();
+                out.print("<script language=\"javascript\">alert('节点已存在');window.location.href='index'</script>");
+                return "index";
+            }
+        }
+
+        boolean status = nodeService.testConnect(host,sshUser,sshPass,sshPort);
+        if (status){
+            nodeInfoReposotory.save(new NodeInfo( host,sshUser,sshPass,sshPort));
+            response.setContentType("text/html;charset=utf-8");
+            PrintWriter out = response.getWriter();
+            out.print("<script language=\"javascript\">alert('添加成功');window.location.href='index'</script>");
+
+
+        }
+        else {
+            response.setContentType("text/html;charset=utf-8");
+            PrintWriter out = response.getWriter();
+            out.print("<script language=\"javascript\">alert('请检查节点ip以及host');window.location.href='index'</script>");
+        }
+
+//        return "-1";
+        return "index";
+    }
+
     @GetMapping("/startEx")
     public String experiment(ModelMap map){
         //创建容器时，先判断容器是否存在，再测试端口号是否存在，再创建
@@ -187,12 +219,54 @@ public class WebController {
             return "index";
         }
     }
+
     @GetMapping("/deleteUser")
     @ResponseBody
     public int   deleteUser(HttpServletRequest request,@RequestParam Long id){
         System.out.println(id);
         userInfoRepository.deleteById(id);
         System.out.println("这里是删除用户");
+        return -1;
+
+    }
+
+    @GetMapping("/deleteDocker")
+    @ResponseBody
+    public int   deleteDocker(HttpServletRequest request,@RequestParam Long  id){
+//        System.out.println(id);
+//        userInfoRepository.deleteById(id);
+        System.out.println(id);
+        dockerService.deleteByid(id);
+        exInfoRepository.deleteById(id);
+        System.out.println("这里是删除容器");
+        return -1;
+
+    }
+
+    @GetMapping("/cgDockerStatus")
+    @ResponseBody
+    public int   cgDockerStatus(HttpServletRequest request,@RequestParam Long  id ,String status){
+//        System.out.println(id);
+//        userInfoRepository.deleteById(id);
+        System.out.println("这里是容器状态");
+        System.out.println(id);
+        System.out.println(status);
+        String containerName = exInfoRepository.findExInfoById(id).getUserName();
+        String reallStatus = dockerService.isExitContainerName(containerName);
+        if ((reallStatus.toLowerCase().equals("run")&&status.toLowerCase().equals("false"))|| (reallStatus.toLowerCase().equals("stop")&&status.toLowerCase().equals("true")) ){
+            switch (reallStatus.toLowerCase()){
+                case "run":
+                    dockerService.stopByContainerName(containerName);
+                    break;
+                case "stop":
+                    dockerService.startContainerByName(containerName);
+                    break;
+                default:
+                    break;
+            }
+
+        }
+
         return -1;
 
     }
@@ -234,45 +308,111 @@ public class WebController {
 //        return "test";
 //    }
 
-    @RequestMapping("/toTest")
-    public String test(){
+
+
+    @RequestMapping("/toNodeInfo")
+    public String toNodeInfo() {
         System.out.println("这里是获取集群信息");
-        nodeService.getSysMemInfo();
-        return "test";
+        return "nodeInfo";
     }
+
     @RequestMapping("/getNodeInfo")
     @ResponseBody
-    public String getNodeInfo(){
+    public String getNodeInfo()throws Exception{
         System.out.println("这里是获取redis 信息");
-        List<String> list = nodeService.getFromRedis();
-
-//
-//        for (String str :list){
-//
-//    }
-
-//        String test = JSON.toJSONString(list);
-//
-//        String data04 = StringEscapeUtils.unescapeJava(test);
-//
-//        System.out.println(data04);
-
+        Map<String, Object> nodeInfos = nodeService.getFromRedis();
         JSONObject jsonpObject = new JSONObject();
         jsonpObject.put("code",0);
         jsonpObject.put("msg","");
         jsonpObject.put("count",1000);
-        jsonpObject.put("data",list);
-//        System.out.println(jsonpObject.get(array));
+        jsonpObject.put("data",nodeInfos);
+//        System.out.println(jsonpObject.toJSONString());
+        return jsonpObject.toJSONString();
+    }
 
-//        System.out.println(jsonpObject.toJSONString().replace("\\",""));
+
+    @RequestMapping("/getNodeIp")
+    @ResponseBody
+    public String getNodeIp() {
+        System.out.println("这里是获取节点ip");
+        List<NodeInfo> nodeInfos = nodeInfoReposotory.findAll();
+        List<String> hosts =new ArrayList<>();
+        for(NodeInfo nodeInfo:nodeInfos){
+            hosts.add(nodeInfo.getIp());
+        }
+        JSONObject jsonpObject = new JSONObject();
+        jsonpObject.put("code",0);
+        jsonpObject.put("msg","");
+        jsonpObject.put("count",1000);
+        jsonpObject.put("data",hosts);
+//        System.out.println(jsonpObject.toJSONString());
         return jsonpObject.toJSONString();
     }
 
 
 
 
+    //管理容器
+    @RequestMapping("/toManagerDocker")
+    public String toManagerDocker(){
+        return "dockerInfo";
+    }
+
+    @RequestMapping("/managerDocker")
+    @ResponseBody
+    public String managerDocker(){
+        List<DockerInfo> dockerInfos =userService.getAllDocker();
+        JSONObject jsonpObject = new JSONObject();
+        jsonpObject.put("code",0);
+        jsonpObject.put("msg","");
+        jsonpObject.put("count",1000);
+        jsonpObject.put("data",dockerInfos);
+        return jsonpObject.toJSONString();
+    }
 
 
+
+
+    //管理容器
+    @RequestMapping("/toManagerNodes")
+    public String toManagerNodes(){
+        return "managerNodes";
+    }
+
+    @RequestMapping("/managerNodes")
+    @ResponseBody
+    public String managerNodes(){
+        List<NodeInfo> nodeInfos =nodeInfoReposotory.findAll();
+        JSONObject jsonpObject = new JSONObject();
+        jsonpObject.put("code",0);
+        jsonpObject.put("msg","");
+        jsonpObject.put("count",1000);
+        jsonpObject.put("data",nodeInfos);
+        return jsonpObject.toJSONString();
+    }
+
+
+
+    @RequestMapping("/nodeSet")
+    @ResponseBody
+    public String nodeSet(HttpServletResponse response, Long id ,String  ip,String userName,String password,int sshPort )throws IOException{
+        System.out.println("这里是节点信息设置");
+//        System.out.println(name);
+        nodeInfoReposotory.save(new NodeInfo(id,ip,userName,password,sshPort));
+//        nodeService.Connect() ;
+        return "-1";
+
+    }
+    @RequestMapping("/deleteNode")
+    @ResponseBody
+    public String deleteNode(HttpServletResponse response, Long id  )throws IOException{
+        System.out.println("这里是删除节点");
+//        System.out.println(name);
+        nodeInfoReposotory.deleteById(id);
+//        nodeService.Connect() ;
+        return "-1";
+
+    }
 
 
 

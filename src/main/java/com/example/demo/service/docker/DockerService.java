@@ -25,6 +25,6 @@ public interface DockerService {
 
      //查看端口是否可用
      boolean isHostConnectable(String host, int port);
-
+     boolean deleteByid(Long id);
 
 }

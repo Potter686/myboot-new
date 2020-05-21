@@ -1,15 +1,13 @@
 package com.example.demo.service;
 
-import com.example.demo.entity.ExInfo;
-import com.example.demo.entity.Role;
-import com.example.demo.entity.User;
-import com.example.demo.entity.UserInfo;
-import com.example.demo.repository.ExInfoRepository;
-import com.example.demo.repository.RoleRepository;
-import com.example.demo.repository.UserInfoRepository;
-import com.example.demo.repository.UserRepository;
+import com.example.demo.entity.*;
+import com.example.demo.repository.*;
 import com.example.demo.service.docker.DockerService;
+import com.example.demo.service.node.NodeService;
 import com.example.demo.util.MD5Util;
+import com.github.dockerjava.api.model.Container;
+import org.jcp.xml.dsig.internal.dom.DOMKeyInfo;
+import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -25,6 +23,7 @@ import org.springframework.ui.Model;
 import org.thymeleaf.model.IModel;
 
 import javax.xml.crypto.Data;
+import java.io.ObjectStreamClass;
 import java.math.BigInteger;
 import java.sql.Connection;
 import java.util.*;
@@ -44,10 +43,13 @@ public class UserServiceImpl implements UserService{
     private ExInfoRepository exInfoRepository;
     @Autowired
     private DockerService dockerService;
+    @Autowired
+    private NodeInfoReposotory nodeInfoReposotory;
+    @Autowired
+    private NodeService nodeService;
 
-
-    @Value("${docker.ip}")
-    private String hostIp;
+//    @Value("${docker.ip}")
+//    private String hostIp;
 
 
     //用户注册
@@ -208,6 +210,16 @@ public class UserServiceImpl implements UserService{
         String userName = user.getUsername();
         Long id = user.getId();
 
+        //查询可用集群
+        List<NodeInfo> nodeInfos= nodeInfoReposotory.findAll();
+        //根据资源情况调整
+//        for(NodeInfo nodeInfo:nodeInfos){
+//
+////            float  memUsage = nodeService.getSysMemInfo();
+//        }
+        String hostip =nodeInfos.get(0).getIp();
+
+
         //查询用户端口
         ExInfo exInfo = exInfoRepository.findExInfoById(id);
 
@@ -219,50 +231,51 @@ public class UserServiceImpl implements UserService{
 
             int port = exInfo.getPort();
             String nameFromPort = exInfo.getUserName();
+            String ip = exInfo.getNodeIp();
 
             //查询用户容器是否存在
             System.out.println("这里是容器状态：");
             if(status.equals("Run")){
                 System.out.println("这里是容器run");
 //                dockerService.startContainerByName(userName);
-                return hostIp+':'+port;
+                return ip+':'+port;
             }
             else if (status.equals("Stop")){
                 System.out.println("这里是容器停止");
                 dockerService.startContainerByName(userName);
                 for (int num = 0 ;num < 5;num ++){
-                    boolean portStatus  = dockerService.isHostConnectable(hostIp,port);
+                    boolean portStatus  = dockerService.isHostConnectable(ip,port);
                     if (!portStatus){
                         break;
                     }
                 }
 
-                return hostIp+':'+port;
+                return ip+':'+port;
             }
             //若不存在则创建容器并启动
             else  {
                 // 被占用则重新加一
-                while (dockerService.isHostConnectable(hostIp,port)){
+                while (dockerService.isHostConnectable(hostip,port)){
                     //查询端口的最大值
                     int maxPort = exInfoRepository.max().toBigInteger().intValue();
                     //使用端口最大值加一
                     port = maxPort;
                     port = port+1;
                 }
-                ExInfo newExInfo = new ExInfo(id,port,userName);
+                ExInfo newExInfo = new ExInfo(id,port,userName,hostip);
                 exInfoRepository.save(newExInfo);
                 dockerService.createDocker(userName,port);
 
 
                 for (int num = 0 ;num < 5;num ++){
-                    boolean portStatus  = dockerService.isHostConnectable(hostIp,port);
+                    boolean portStatus  = dockerService.isHostConnectable(hostip,port);
                     if (!portStatus){
                         break;
                     }
                 }
 
 
-                return hostIp+":"+port;
+                return hostip+":"+port;
             }
 
 
@@ -278,15 +291,18 @@ public class UserServiceImpl implements UserService{
             if (status.equals("Stop")){
                 dockerService.deleteByContainerName(userName);
             }
-            int maxPort = exInfoRepository.max().toBigInteger().intValue();
+            int maxPort = 10000;
+            if (exInfoRepository.max()!=null){
+                maxPort=exInfoRepository.max().toBigInteger().intValue();
+            }
             int port = maxPort+1;
-            while (dockerService.isHostConnectable(hostIp,port)){
+            while (dockerService.isHostConnectable(hostip,port)){
                 //查询端口的最大值
                 //使用端口最大值加一
                 port = port+1;
             }
 
-            ExInfo exInfo1 = new ExInfo(id,port,userName);
+            ExInfo exInfo1 = new ExInfo(id,port,userName,hostip);
             exInfoRepository.save(exInfo1);
             dockerService.createDocker(userName,port);
 
@@ -294,13 +310,13 @@ public class UserServiceImpl implements UserService{
 
 
             for (int num = 0 ;num < 5;num ++){
-                boolean portStatus  = dockerService.isHostConnectable(hostIp,port);
+                boolean portStatus  = dockerService.isHostConnectable(hostip,port);
                 if (!portStatus){
                     break;
                 }
             }
 
-            return hostIp+":"+port;
+            return hostip+":"+port;
         }
 
 
@@ -353,6 +369,55 @@ public class UserServiceImpl implements UserService{
 //            System.out.println("容器不存在");
         }
 
+    }
+
+    //获取所有容器信息
+    public List<DockerInfo> getAllDocker(){
+//        Map<String,Object> map = new HashMap<String,Object>();
+        List<DockerInfo> dockerInfos=new ArrayList<>();
+//        DockerInfo dockerInfo = new DockerInfo();
+        List<ExInfo> exInfos = exInfoRepository.findAll();
+        if (exInfos.size()>0) {
+            for (ExInfo exInfo : exInfos) {
+                DockerInfo dockerInfo = new DockerInfo(exInfo.getId(), exInfo.getUserName(), exInfo.getPort(), "None");
+                dockerInfos.add(dockerInfo);
+//                map.put(exInfo.getUserName(), "None");
+            }
+            List<Container> containers = dockerService.getALlRunContainer();
+            for (Container container : containers) {
+                String containerName = container.getNames()[0].replace("/", "");
+                for (DockerInfo dockerInfo1 : dockerInfos) {
+                    if (dockerInfo1.getDockerName().equals(containerName)) {
+                        dockerInfo1.setStatus("run");
+                    }
+                }
+
+//                if (map.containsKey(containerName)) {
+//
+//                    map.put(containerName, "run");
+//
+//                }
+//            System.out.println(container.getPorts()[0].getPublicPort().toString());  //获取容器端口
+
+            }
+            List<Container> containers1 = dockerService.getALlStopContainer();
+            for (Container container1 : containers1) {
+//            System.out.println(container1.getPorts()[0].getPrivatePort().toString());
+                String containerName1 = container1.getNames()[0].replace("/", "");
+                for (DockerInfo dockerInfo2 : dockerInfos) {
+                    if (dockerInfo2.getDockerName().equals(containerName1)) {
+                        dockerInfo2.setStatus("stop");
+                    }
+//                if (map.containsKey(containerName1)) {
+//                    map.put(containerName1, "stop");
+//                }
+                }
+            }
+        }
+        System.out.println(dockerInfos);
+
+
+        return dockerInfos;
     }
 
 

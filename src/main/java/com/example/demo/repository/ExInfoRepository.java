@@ -12,4 +12,5 @@ public interface ExInfoRepository extends JpaRepository<ExInfo,Long> {
 
     @Query(value = "SELECT max(port) FROM ExInfo ")
     public BigDecimal max();
+
 }

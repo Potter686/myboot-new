@@ -9,11 +9,13 @@ import java.util.List;
 import java.util.Map;
 
 public interface NodeService {
-    Connection  sshConnect();
-    void getSysMemInfo();
-    Map<String, Object> getSysCpuInfo(Connection connection);
-
-    List<String> getFromRedis();
+//    Connection  sshConnect();
+//    void getSysMemInfo();
+//    float getSysCpuInfo();
+    void Connect();
+    Map<String, Object>  getFromRedis();
+    void  getInfo()throws Exception;
+    boolean testConnect(String ip,String userName ,String password ,int port);
 
 }
 

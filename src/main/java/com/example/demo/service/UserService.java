@@ -1,5 +1,6 @@
 package com.example.demo.service;
 
+import com.example.demo.entity.DockerInfo;
 import com.example.demo.entity.User;
 import com.example.demo.entity.UserInfo;
 import org.springframework.data.domain.Page;
@@ -22,5 +23,6 @@ public interface UserService {
      String  stopEx() ; // 停止实验
      String  deleteEx(Map<String, Object> map); //删除容器
 
-    public UserInfo getMyInfo ();//获取个人新
+     UserInfo getMyInfo ();//获取个人新
+    List<DockerInfo> getAllDocker();
 }

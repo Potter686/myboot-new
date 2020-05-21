@@ -1,8 +1,10 @@
 package com.example.demo.service.docker;
 
 
+import com.example.demo.entity.ExInfo;
 import com.example.demo.entity.Role;
 import com.example.demo.entity.User;
+import com.example.demo.repository.ExInfoRepository;
 import com.example.demo.util.MD5Util;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
@@ -16,6 +18,7 @@ import com.github.dockerjava.core.command.ExecStartResultCallback;
 import com.sun.net.httpserver.Authenticator;
 import org.json.JSONObject;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
@@ -34,13 +37,18 @@ import org.springframework.beans.factory.annotation.Value;
 @Service
 public class DockerServiceImpl implements DockerService {
 
-    @Value("${docker.ip}")
-    private String dockerIp;
+//    @Value("${docker.ip2")
+    private String dockerIp="192.168.142.132";
+
+    @Autowired
+    private ExInfoRepository exInfoRepository;
 
     @Override
     public DockerClient getClientCon(){
+
+        String address = "tcp://"+dockerIp+":2375";
         return DockerClientBuilder
-                .getInstance("tcp://{dockeIP}:2375".format(dockerIp)).build();
+                .getInstance(address).build();
     }
 
     //创建并启动容器
@@ -107,6 +115,23 @@ public class DockerServiceImpl implements DockerService {
         return true;
 
     }
+    public boolean deleteByid(Long id){
+        DockerClient dockerClient = this.getClientCon();
+        String containerName = exInfoRepository.findExInfoById(id).getUserName();
+        String status=this.isExitContainerName(containerName);
+        if (status.equals("Run")){
+            this.stopByContainerName(containerName);
+            this.deleteByContainerName(containerName);
+        }
+        else if (status.equals("Stop")){
+            this.deleteByContainerName(containerName);
+        }
+       else return false;
+
+        return true;
+
+    }
+
     //停止容器
     public boolean stopByContainerName(String containerName){
         DockerClient dockerClient = this.getClientCon();

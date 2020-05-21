@@ -14,11 +14,13 @@ public class ExInfo {
     private Long id;
     private int port;
     private String userName;
+    private  String nodeIp;
 
-    public ExInfo(Long id ,int port ,String userName){
+    public ExInfo(Long id ,int port ,String userName,String nodeIp){
         this.id=id;
         this.port =port;
         this.userName=userName;
+        this.nodeIp=nodeIp;
     }
     public ExInfo(){
 
